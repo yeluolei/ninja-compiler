@@ -47,7 +47,7 @@ public class Compiler {
 	public void ReInit(String source) {
 		stream = new ByteArrayInputStream(source.getBytes());
 		root = null;
-		eg2.ReInit(stream);
+		eg2.MyReInit(stream);
 	}
 
 	public int getWeigth() throws ParseException {
