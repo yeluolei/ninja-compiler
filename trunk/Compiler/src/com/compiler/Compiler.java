@@ -1,21 +1,8 @@
 package com.compiler;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
-
-import javax.swing.JFrame;
 import javax.swing.tree.DefaultMutableTreeNode;
-
-import com.view.CompilerFrame;
-
-import com.compiler.SimpleCharStream;
-import com.compiler.Token;
-import com.compiler.eg2TokenManager;
 
 public class Compiler {
 	ByteArrayInputStream stream;
@@ -57,7 +44,6 @@ public class Compiler {
 	}
 
 	public int weigth(SimpleNode node) {
-		int weigth = 0;
 		int childrenWeight = 0;
 		if (node.children != null) {
 			for (int i = 0; i < node.children.length; ++i) {
