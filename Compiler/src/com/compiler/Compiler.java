@@ -11,35 +11,35 @@ public class Compiler {
 	public Compiler(String source) {
 		stream = new ByteArrayInputStream(source.getBytes());
 		root = null;
-		new eg2(stream);
+		new XYZ2(stream);
 	}
 
 	public String LexicalAnalyse() {
-		String result = eg2.LexicalAnalyse();
+		String result = XYZ2.LexicalAnalyse();
 		return result;
 	}
 
 	public boolean getLexicalState() {
-		return eg2.getLexicalState();
+		return XYZ2.getLexicalState();
 	}
 
 	public String getLexicalErrorMessage() {
-		return eg2.getLexicalErrorMessage();
+		return XYZ2.getLexicalErrorMessage();
 	}
 
 	public int getsimpleStatCnt() {
-		return eg2.getsimpleStatCnt();
+		return XYZ2.getsimpleStatCnt();
 	}
 
 	public void ReInit(String source) {
 		stream = new ByteArrayInputStream(source.getBytes());
 		root = null;
-		eg2.MyReInit(stream);
+		XYZ2.MyReInit(stream);
 	}
 
 	public int getWeigth() throws ParseException {
 		if (root == null)
-			root = eg2.Start();
+			root = XYZ2.Start();
 		return weigth(root);
 	}
 
@@ -77,14 +77,14 @@ public class Compiler {
 
 	public String getSyntaxTreeString() throws ParseException {
 		if (root == null)
-			root = eg2.Start();
+			root = XYZ2.Start();
 		String result = dump(root);
 		return result;
 	}
 
 	public DefaultMutableTreeNode getSyntaxTree() throws ParseException {
 		if (root == null)
-			root = eg2.Start();
+			root = XYZ2.Start();
 		return GenerateSyntaxTree(root);
 	}
 
@@ -112,10 +112,10 @@ public class Compiler {
 				if (n != null) {
 
 					DefaultMutableTreeNode temp = GenerateSyntaxTree(n);
-					if (node.children.length > 1) {
+//					if (node.children.length > 1) {
 						jTreenode.add(temp);
-					} else
-						jTreenode = temp;
+//					} else
+//						jTreenode = temp;
 
 				}
 			}
@@ -124,6 +124,6 @@ public class Compiler {
 	}
 
 	public Map<String, Integer> getTokenRecord() {
-		return eg2.getTokenRecord();
+		return XYZ2.getTokenRecord();
 	}
 }

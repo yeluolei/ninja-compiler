@@ -11,14 +11,13 @@ public class Main {
 	 */
 	@SuppressWarnings("deprecation")
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		CompilerFrame cFrame = new CompilerFrame();
 		cFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		cFrame.show();
 		
-//		CompilerShell shell = new CompilerShell();
-//		//shell.createSShell();
-//		shell.open();
+		//CompilerShell shell = new CompilerShell();
+		//shell.createSShell();
+		//shell.open();
 	}
 
 }
