@@ -29,7 +29,7 @@ import javax.swing.JTextPane;
 import com.compiler.Compiler;
 import com.compiler.ParseException;
 import com.compiler.SimpleNode;
-import com.compiler.eg2;
+import com.compiler.XYZ2;
 
 import java.awt.Dimension;
 import javax.swing.JTree;
@@ -55,9 +55,10 @@ public class CompilerFrame extends JFrame {
 	private File sourceFile;
 
 	private Compiler compiler; // @jve:decl-index=0:
-	private eg2 eg=null;
+	private XYZ2 xyz2=null;
 	private JTabbedPane jSideTabbedPane1 = null;
 	private JScrollPane jScrollPane = null;
+	private JScrollPane jScrollPane2= null;
 	private JTable jVarTable = null;
 	private JTree jSyntaxTree = null;
 	private DefaultMutableTreeNode root;
@@ -82,7 +83,7 @@ public class CompilerFrame extends JFrame {
 	 * @return void
 	 */
 	private void initialize() {
-		this.setSize(701, 497);
+		this.setSize(1200, 765);
 		this.setContentPane(getJContentPane());
 		this.setTitle("Compiler");
 	}
@@ -240,7 +241,7 @@ public class CompilerFrame extends JFrame {
 	private JTabbedPane getJTabbedPane() {
 		if (jTabbedPane == null) {
 			jTabbedPane = new JTabbedPane();
-			jTabbedPane.setBounds(new Rectangle(2, 255, 499, 203));
+			jTabbedPane.setBounds(new Rectangle(3, 375, 499, 346));
 			jTabbedPane.addTab("output", null, getOutPutAre(), null);
 			jTabbedPane.addTab("lexical report", null, getTa_lexicalResult(),
 					null);
@@ -274,10 +275,10 @@ public class CompilerFrame extends JFrame {
 	 * @return javax.swing.JTextArea
 	 */
 	private JScrollPane getTa_syntaxResult() {
-		JScrollPane jp = new JScrollPane();
+		JScrollPane jp = null;
 		if (ta_syntaxResult == null) {
 			ta_syntaxResult = new JTextArea();
-			jp = new JScrollPane(ta_syntaxResult);
+			 jp = new JScrollPane(ta_syntaxResult);
 		}
 		return jp;
 	}
@@ -306,10 +307,10 @@ public class CompilerFrame extends JFrame {
 	private JTabbedPane getJSideTabbedPane1() {
 		if (jSideTabbedPane1 == null) {
 			jSideTabbedPane1 = new JTabbedPane();
-			jSideTabbedPane1.setBounds(new Rectangle(509, 2, 174, 456));
+			jSideTabbedPane1.setBounds(new Rectangle(503, 8, 673, 723));
 			jSideTabbedPane1.addTab("Var", null, getJScrollPane(), null);
 			jSideTabbedPane1
-					.addTab("Syntax Tree", null, getJSyntaxTree(), null);
+					.addTab("Syntax Tree", null, getJScrollPane2(), null);
 		}
 		return jSideTabbedPane1;
 	}
@@ -326,7 +327,14 @@ public class CompilerFrame extends JFrame {
 		}
 		return jScrollPane;
 	}
-
+	
+	private JScrollPane getJScrollPane2() {
+		if (jScrollPane2 == null) {
+			jScrollPane2 = new JScrollPane();
+			jScrollPane2.setViewportView(getJSyntaxTree());
+		}
+		return jScrollPane2;
+	}
 	/**
 	 * This method initializes jVarTable
 	 * 
@@ -360,7 +368,7 @@ public class CompilerFrame extends JFrame {
 	private JScrollPane getJCodeWindowScrollPane() {
 		if (jCodeWindowScrollPane == null) {
 			jCodeWindowScrollPane = new JScrollPane();
-			jCodeWindowScrollPane.setBounds(new Rectangle(6, 51, 495, 198));
+			jCodeWindowScrollPane.setBounds(new Rectangle(6, 51, 495, 322));
 			jCodeWindowScrollPane.setViewportView(getEp_CodeWindow());
 		}
 		return jCodeWindowScrollPane;
@@ -471,4 +479,4 @@ public class CompilerFrame extends JFrame {
 		}
 	}
 
-} // @jve:decl-index=0:visual-constraint="10,10"
+}  //  @jve:decl-index=0:visual-constraint="1,5"
