@@ -387,7 +387,6 @@ public class MyVisitor implements XYZ2Visitor {
 		String identName = (String)node.jjtGetChild(0).jjtAccept(this, data);
 		String indexExpType = (String)node.jjtGetChild(1).jjtAccept(this, data);
 		String expType = (String)node.jjtGetChild(2).jjtAccept(this, data);
-		
 		if (checkIdentifyType(identName,
 				((SimpleNode)node.jjtGetChild(0)).jjtGetFirstToken().beginLine)
 				.equals("IntArray"))
@@ -608,7 +607,10 @@ public class MyVisitor implements XYZ2Visitor {
 	public Object visit(ASTMessageSend node, Object data) {
 		String callerType = (String)node.jjtGetChild(0).jjtAccept(this, data);
 		String funcname = (String)node.jjtGetChild(1).jjtAccept(this, data);
-		Vector<String>exps = (Vector<String>)node.jjtGetChild(2).jjtAccept(this, data);
+		Vector<String>exps = new Vector<String>();
+		if (node.jjtGetNumChildren() == 2){
+			 exps = (Vector<String>)node.jjtGetChild(2).jjtAccept(this, data);
+		}
 		String returnType = "Default";
 		
 		ClassEntity tempClassEntity = programTable.getClassTable().get(callerType);
