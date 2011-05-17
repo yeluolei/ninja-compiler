@@ -1,39 +1,26 @@
 package com.view;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
-import javax.swing.JPanel;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
-
-import com.compiler.Compiler;
-import com.compiler.ParseException;
-import com.compiler.SimpleNode;
-import com.compiler.XYZ2;
-
-import java.awt.Dimension;
 import javax.swing.JTree;
-import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -41,15 +28,22 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import com.compiler.Compiler;
+import com.compiler.ParseException;
+import com.compiler.XYZ2;
+import com.visitor.MyVisitor;
+
 public class CompilerFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
+	private static JScrollPane jScrollPane3 = null;  //  @jve:decl-index=0:
 	private JPanel jContentPane = null;
 	private JTextArea jOutPutArea = null;
 	private JButton Bt_begin = null;
 	private JTextField tf_fileLocation = null;
 	private JTabbedPane jTabbedPane = null;
 	private JTextArea ta_lexicalResult = null;
+	private JTextArea ta_typeResult = null;
 	private JTextArea ta_syntaxResult = null;
 	private JButton bt_Start = null;
 	private File sourceFile;
@@ -60,6 +54,7 @@ public class CompilerFrame extends JFrame {
 	private JScrollPane jScrollPane = null;
 	private JScrollPane jScrollPane2= null;
 	private JTable jVarTable = null;
+	private JTable jTypeTable = null;
 	private JTree jSyntaxTree = null;
 	private DefaultMutableTreeNode root;
 	String[] name = { "变量", "频率" };
@@ -182,7 +177,7 @@ public class CompilerFrame extends JFrame {
 			for (String o : tokenRecord.keySet()) {
 				model.addRow(new Object[] { o,
 						tokenRecord.get(o).toString() });
-				System.out.println(o + " " + tokenRecord.get(o).toString());
+				//System.out.println(o + " " + tokenRecord.get(o).toString());
 			}
 			if (compiler.getLexicalState() == false) {
 				jOutPutArea.append("词法错误!\n");
@@ -214,6 +209,15 @@ public class CompilerFrame extends JFrame {
 				e1.printStackTrace();
 				ta_syntaxResult.append(e1.getMessage());
 				jOutPutArea.append("语法分析失败\n");
+			}
+			
+			ta_typeResult.append("Type Checking Start!\n");
+			MyVisitor visitor = new MyVisitor();
+			compiler.getRoot().jjtAccept(visitor, 1);
+			compiler.getRoot().jjtAccept(visitor, 2);
+			for (int i = 0 ; i < visitor.error.getNumErrors();i++ )
+			{
+				ta_typeResult.append(visitor.error.getErrorsList().get(i)+"\n");
 			}
 		}
 
@@ -247,10 +251,25 @@ public class CompilerFrame extends JFrame {
 					null);
 			jTabbedPane.addTab("syntax report", null, getTa_syntaxResult(),
 					null);
+			jTabbedPane.addTab("Type report", null, getTa_typeResult(),
+					null);
 		}
 		return jTabbedPane;
 	}
 
+	private JScrollPane getTa_typeResult() {
+		JScrollPane jp = null;
+		if (ta_typeResult == null) {
+			ta_typeResult = new JTextArea();
+			ta_typeResult.setWrapStyleWord(true);
+			ta_typeResult.setLineWrap(true);
+			jp = new JScrollPane(ta_typeResult);
+			// getContentPane().add(jp);
+		}
+		// return ta_lexicalResult;
+		return jp;
+	}
+	
 	/**
 	 * This method initializes ta_lexicalResult
 	 * 
@@ -334,6 +353,21 @@ public class CompilerFrame extends JFrame {
 			jScrollPane2.setViewportView(getJSyntaxTree());
 		}
 		return jScrollPane2;
+	}
+	
+	private JScrollPane getJScrollPane3(){
+		if (jScrollPane3 == null) {
+			jScrollPane3 = new JScrollPane();
+			jScrollPane3.setViewportView(getJTypeTable());
+		}
+		return jScrollPane3;
+	}
+	
+	private JTable getJTypeTable(){
+		if (jTypeTable == null) {
+			jTypeTable = new JTable(simplemodel);
+		}
+		return jVarTable;
 	}
 	/**
 	 * This method initializes jVarTable

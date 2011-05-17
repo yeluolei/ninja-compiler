@@ -9,6 +9,13 @@ public class ClassEntity{
 	private Hashtable<String, Variability>fieldTable;
 	private Hashtable<String, MethodEntity>methodTable;
 	
+	
+	public ClassEntity()
+	{
+		fieldTable= new Hashtable<String, Variability>();
+		methodTable = new Hashtable<String, MethodEntity>();
+	}
+	
 	public String getClassName() {
 		return className;
 	}
