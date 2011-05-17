@@ -1,19 +1,20 @@
 package com.table;
 
 import java.util.Hashtable;
+import java.util.Vector;
 
 public class ClassEntity{
 	private String className;
 	private String parentClassName;
 	private String classReturnType;
 	private Hashtable<String, Variability>fieldTable;
-	private Hashtable<String, MethodEntity>methodTable;
+	private Vector<MethodEntity>methodTable;
 	
 	
 	public ClassEntity()
 	{
 		fieldTable= new Hashtable<String, Variability>();
-		methodTable = new Hashtable<String, MethodEntity>();
+		methodTable = new Vector<MethodEntity>();
 	}
 	
 	public String getClassName() {
@@ -49,11 +50,7 @@ public class ClassEntity{
 		this.fieldTable = fieldTable;
 	}
 
-	public Hashtable<String, MethodEntity> getMethodTable() {
+	public Vector<MethodEntity> getMethodTable() {
 		return methodTable;
 	}
-
-	public void setMethodTable(Hashtable<String, MethodEntity> methodTable) {
-		this.methodTable = methodTable;
-	}	
 }
