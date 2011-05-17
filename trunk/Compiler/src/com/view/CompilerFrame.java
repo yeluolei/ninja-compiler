@@ -30,7 +30,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import com.compiler.Compiler;
 import com.compiler.ParseException;
-import com.compiler.XYZ2;
 import com.visitor.MyVisitor;
 
 public class CompilerFrame extends JFrame {
@@ -49,7 +48,6 @@ public class CompilerFrame extends JFrame {
 	private File sourceFile;
 
 	private Compiler compiler; // @jve:decl-index=0:
-	private XYZ2 xyz2=null;
 	private JTabbedPane jSideTabbedPane1 = null;
 	private JScrollPane jScrollPane = null;
 	private JScrollPane jScrollPane2= null;
@@ -215,6 +213,7 @@ public class CompilerFrame extends JFrame {
 			MyVisitor visitor = new MyVisitor();
 			compiler.getRoot().jjtAccept(visitor, 1);
 			compiler.getRoot().jjtAccept(visitor, 2);
+			compiler.getRoot().jjtAccept(visitor, 3);
 			for (int i = 0 ; i < visitor.error.getNumErrors();i++ )
 			{
 				ta_typeResult.append(visitor.error.getErrorsList().get(i)+"\n");
@@ -472,8 +471,8 @@ public class CompilerFrame extends JFrame {
 		 */
 		private static final long serialVersionUID = 1L;
 		String[] columnNames = { "类别", "数量" };
-		Vector data1 = new Vector<String>();
-		Vector data2 = new Vector<String>();
+		Vector<String> data1 = new Vector<String>();
+		Vector<String> data2 = new Vector<String>();
 		Object[][] data = new Object[10][2];
 
 		int length = 0;
@@ -501,8 +500,8 @@ public class CompilerFrame extends JFrame {
 		}
 
 		public void addRow(Object[] d) {
-			data1.add(d[0]);
-			data2.add(d[1]);
+			data1.add((String)d[0]);
+			data2.add((String)d[1]);
 			fireTableDataChanged();
 		}
 

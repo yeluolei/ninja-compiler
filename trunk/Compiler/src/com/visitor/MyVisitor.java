@@ -55,6 +55,7 @@ import com.compiler.XYZ2Visitor;
 import com.error.ErrorMessage;
 import com.table.ClassEntity;
 import com.table.MethodEntity;
+import com.table.ParameterTable;
 import com.table.ProgramTable;
 import com.table.Variability;
 
@@ -63,6 +64,7 @@ public class MyVisitor implements XYZ2Visitor {
 	private ClassEntity currClass = null;
 	private MethodEntity currMethod = null;
 	public ProgramTable programTable = null;
+	public int methodindex = 0;
 	
 	public MyVisitor(){
 		super();
@@ -103,6 +105,8 @@ public class MyVisitor implements XYZ2Visitor {
 			}	
 			currClass = null;
 		}
+		else if (data.equals(2)){
+		}
 		else {
 			currClass = programTable.getClassTable().get((String)node.jjtGetChild(0).jjtAccept(this, data));
 			node.childrenAccept(this, data);
@@ -113,7 +117,7 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTTypeDeclaration node, Object data) {
-		node.childrenAccept(this, data);
+		node.jjtGetChild(0).jjtAccept(this, data);
 		return null;
 	}
 
@@ -124,13 +128,6 @@ public class MyVisitor implements XYZ2Visitor {
 			String className=(String)node.jjtGetChild(0).jjtAccept(this, data);
 			currClass.setClassName(className);
 		
-			for (int i = 1 ; i < node.jjtGetNumChildren() ; i++)
-			{
-				if (node.jjtGetChild(i) instanceof ASTMethodDeclaration)
-				{
-					node.jjtGetChild(i).jjtAccept(this, data);
-				}
-			}
 			if(programTable.getClassTable().get(className)!=null)
 			{
 				error.addError(((SimpleNode)node.jjtGetChild(0)).jjtGetFirstToken().beginLine,
@@ -140,8 +137,21 @@ public class MyVisitor implements XYZ2Visitor {
 			}	
 			currClass = null;
 		}
+		else if (data.equals(2))
+		{
+			currClass = programTable.getClassTable().get((String)node.jjtGetChild(0).jjtAccept(this, data));
+			for (int i = 1 ; i < node.jjtGetNumChildren() ; i++)
+			{
+				if (node.jjtGetChild(i) instanceof ASTMethodDeclaration)
+				{
+					node.jjtGetChild(i).jjtAccept(this, data);
+				}
+			}
+			currClass = null;
+		}
 		else {
 			currClass = programTable.getClassTable().get((String)node.jjtGetChild(0).jjtAccept(this, data));
+			methodindex = 0;
 			node.childrenAccept(this, data);
 			currClass = null;
 		}
@@ -158,20 +168,30 @@ public class MyVisitor implements XYZ2Visitor {
 			String parentClassName = (String) node.jjtGetChild(1).jjtAccept(this, data);
 			currClass.setParentClassName(parentClassName);
 			
-			for (int i = 1 ; i < node.jjtGetNumChildren() ; i++)
-			{
-				if (node.jjtGetChild(i) instanceof ASTMethodDeclaration)
-				{
-					node.jjtGetChild(i).jjtAccept(this, data);
-				}
-			}
-			
 			if (programTable.getClassTable().get(className) != null) {
 				error.addError(
 						((SimpleNode) node.jjtGetChild(0)).jjtGetFirstToken().beginLine,
 						className + "class redefined");
 			} else {
 				programTable.getClassTable().put(className, currClass);
+			}
+			currClass = null;
+		}
+		else if (data.equals(2))
+		{
+			currClass = programTable.getClassTable().get((String) node.jjtGetChild(0).jjtAccept(this, data));
+			// check if parent class has exist
+			if (programTable.getClassTable().get(currClass.getParentClassName()) == null)
+			{
+				error.addError(node.jjtGetFirstToken().beginLine,
+						currClass.getClassName() + " Extented type not defined");
+			}
+			for (int i = 1 ; i < node.jjtGetNumChildren() ; i++)
+			{
+				if (node.jjtGetChild(i) instanceof ASTMethodDeclaration)
+				{
+					node.jjtGetChild(i).jjtAccept(this, data);
+				}
 			}
 			currClass = null;
 		}
@@ -190,26 +210,25 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTMethodDeclaration node, Object data) {
-		if (data.equals(1)){
+		if (data.equals(1)){}
+		else if (data.equals(2))
+		{
 			currMethod = new MethodEntity();
 			String methodName = ((SimpleNode) node.jjtGetChild(1))
 					.jjtGetFirstToken().image;
-			Object temp = node.jjtGetChild(0).jjtAccept(this, data);
-			currMethod.setReturnType((String)temp);
 			currMethod.setMethodName(methodName);
-			
-			if (currClass.getMethodTable().get(methodName) != null) {
-				error.addError(
-						((SimpleNode) node.jjtGetChild(1)).jjtGetFirstToken().beginLine,
-						methodName + "method redefined");
-			}else {
-				currClass.getMethodTable().put(methodName, currMethod);
+			String temp = (String)node.jjtGetChild(0).jjtAccept(this, data);
+			if (!programTable.checkTypeExist(temp)){
+				error.addError(node.jjtGetFirstToken().beginLine, "Return Type not defined");
+				temp = "Default";
 			}
+			currMethod.setReturnType(temp);
+			currClass.getMethodTable().add(currMethod);
 			currMethod = null; // 当前方法定义域结束
 		}
 		else {
-			currMethod = currClass.getMethodTable().get(((SimpleNode) node.jjtGetChild(1))
-					.jjtGetFirstToken().image);
+			currMethod = currClass.getMethodTable().get(methodindex);
+			methodindex++;
 			for (int i = 2 ; i < node.jjtGetNumChildren()-1 ; i++)
 			{
 				node.jjtGetChild(i).jjtAccept(this, data);
@@ -226,13 +245,13 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTPreDecl node, Object data) {
-		node.childrenAccept(this, data);
+		node.jjtGetChild(0).jjtAccept(this, data);
 		return null;
 	}
 
 	@Override
 	public Object visit(ASTPostDecl node, Object data) {
-		node.childrenAccept(this, data);
+		node.jjtGetChild(0).jjtAccept(this, data);
 		return null;
 	}
 
@@ -245,8 +264,13 @@ public class MyVisitor implements XYZ2Visitor {
 	@Override
 	public Object visit(ASTFormalParameter node, Object data) {
 		Variability variability= new Variability();
-		variability.setTypeName((String)node.jjtGetChild(0).jjtAccept(this, data));
-		variability.setVarName(((SimpleNode)node.jjtGetChild(1)).toString());
+		String type = (String)node.jjtGetChild(0).jjtAccept(this, data);
+		if (programTable.checkTypeExist(type)){
+			variability.setTypeName(type);
+		}else {
+			error.addError(node.jjtGetFirstToken().beginLine, "Type not defined");
+		}
+		variability.setVarName((String)node.jjtGetChild(1).jjtAccept(this, data));
 		variability.setDeclearLine(((SimpleNode)node.jjtGetChild(1)).jjtGetFirstToken().beginLine);
 		if (!currMethod.getParameters().add(variability)){ // Add the parameter to the para Table
 			error.addError(variability.getDeclearLine(), 
@@ -257,7 +281,7 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTFormalParameterRest node, Object data) {
-		node.childrenAccept(this, data);
+		node.jjtGetChild(0).jjtAccept(this, data);
 		return null;
 	}
 
@@ -293,14 +317,20 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTStatement node, Object data) {
-		node.childrenAccept(this, data);
+		node.jjtGetChild(0).jjtAccept(this, data);
 		return null;
 	}
 
 	@Override
 	public Object visit(ASTVarDeclaration node, Object data) {
 		Variability v = new Variability();
-		v.setTypeName((String)node.jjtGetChild(0).jjtAccept(this, data));
+		String type = (String)node.jjtGetChild(0).jjtAccept(this, data);
+		if (programTable.checkTypeExist(type))
+		{
+			v.setTypeName(type);
+		}else {
+			error.addError(node.jjtGetFirstToken().beginLine, "Type not found");
+		}
 		v.setVarName((String)node.jjtGetChild(1).jjtAccept(this, data));
 		v.setDeclearLine(((SimpleNode)node.jjtGetChild(1)).jjtGetFirstToken().beginLine);
 		
@@ -309,15 +339,26 @@ public class MyVisitor implements XYZ2Visitor {
 		 *  Put it into the FieldTable
 		 */
 		if (currMethod == null){
-			currClass.getFieldTable().put(v.getVarName(), v);
+			if (currClass.getFieldTable().get(v.getVarName()) == null){
+				currClass.getFieldTable().put(v.getVarName(), v);
+			}else {
+				error.addError(node.jjtGetFirstToken().beginLine, v.getVarName() + " Redefined");
+			}
 		}else {
-			currMethod.getLocalTable().put(v.getVarName(), v);
+			if (currMethod.getLocalTable().get(v.getVarName()) == null){
+				currMethod.getLocalTable().put(v.getVarName(), v);
+			}else {
+				error.addError(node.jjtGetFirstToken().beginLine, v.getVarName() + " Redefined");
+			}
 		}
 		return null;
 	}
 
+
+
 	@Override
 	public Object visit(ASTBlock node, Object data) {
+		node.childrenAccept(this, data);
 		return null;
 	}
 
@@ -327,12 +368,13 @@ public class MyVisitor implements XYZ2Visitor {
 	@Override
 	public Object visit(ASTAssignmentStatement node, Object data) {
 		String identName = (String)node.jjtGetChild(0).jjtAccept(this, data);
+		String identType = checkIdentifyType(identName, node.jjtGetFirstToken().beginLine);
 		String expType = (String)node.jjtGetChild(1).jjtAccept(this, data);
-		// TODO Check exp Type can change to identType
-		Variability variability = currClass.getFieldTable().get(identName);
-		if (variability == null)
-		{
-			variability = currMethod.getLocalTable().get(identName);
+		if (!expType.equals(identType)){
+			if (!(expType.equals("Int")&&identType.equals("Long")))
+			{
+				error.addError(node.jjtGetFirstToken().beginLine, "Assiment Type Error");
+			}
 		}
 		return null;
 	}
@@ -411,7 +453,7 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTPrintStatement node, Object data) {
-		node.childrenAccept(this, data);
+		node.jjtGetChild(0).jjtAccept(this, data);
 		return null;
 	}
 
@@ -478,16 +520,16 @@ public class MyVisitor implements XYZ2Visitor {
 		}
 		else {
 			String type = null;
-			String returnType = "Long";
+			String returnType = "Int";
 			
 			for (int i = 0 ; i < node.jjtGetNumChildren() ; i++)
 			{
 				type = (String)node.jjtGetChild(i).jjtAccept(this, data);
-				if (type.equals("Int"))
+				if (type.equals("Long"))
 				{
-					if (returnType.equals("Long"))returnType = "Int";
+					if (returnType.equals("Int"))returnType = "Long";
 				}
-				else if(type.equals("Long")) {
+				else if(type.equals("Int")) {
 				}
 				else {
 					returnType = "Int";
@@ -506,16 +548,16 @@ public class MyVisitor implements XYZ2Visitor {
 		}
 		else{
 			String type = null;
-			String returnType = "Long";
+			String returnType = "Int";
 			
 			for (int i = 0 ; i < node.jjtGetNumChildren() ; i++)
 			{
 				type = (String)node.jjtGetChild(i).jjtAccept(this, data);
-				if (type.equals("Int"))
+				if (type.equals("Long"))
 				{
-					if (returnType.equals("Long"))returnType = "Int";
+					if (returnType.equals("Int"))returnType = "Long";
 				}
-				else if(type.equals("Long")) {
+				else if(type.equals("Int")) {
 				}
 				else {
 					returnType = "Int";
@@ -529,7 +571,7 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTArrayLookup node, Object data) {
-		String priExpType = (String)node.jjtGetChild(0).jjtAccept(this, data);
+		String priExpType =(String)node.jjtGetChild(0).jjtAccept(this, data);
 		String expType = (String)node.jjtGetChild(1).jjtAccept(this, data);
 		if (!expType.equals("Int"))
 		{
@@ -550,16 +592,10 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTArrayLength node, Object data) {
-		if (node.jjtGetChild(0) instanceof ASTIdentifier)
-		{
-			String identName = (String)node.jjtGetChild(0).jjtAccept(this, data);
-			String identType = checkIdentifyType(identName,
-					((SimpleNode)node.jjtGetChild(0)).jjtGetFirstToken().beginLine);
-			if (!(identType.equals("LongArray")||identType.equals("IntArray")))
-			{
-				error.addError(node.jjtGetFirstToken().beginLine,
-						identName + " is not an Array");
-			}
+		String identType = (String) node.jjtGetChild(0).jjtAccept(this, data);
+		if (!(identType.equals("LongArray") || identType.equals("IntArray"))) {
+			error.addError(node.jjtGetFirstToken().beginLine,
+					"Array Length Caller is not an Array");
 		}
 		return "Int";
 	}
@@ -573,15 +609,77 @@ public class MyVisitor implements XYZ2Visitor {
 		String callerType = (String)node.jjtGetChild(0).jjtAccept(this, data);
 		String funcname = (String)node.jjtGetChild(1).jjtAccept(this, data);
 		Vector<String>exps = (Vector<String>)node.jjtGetChild(2).jjtAccept(this, data);
+		String returnType = "Default";
 		
 		ClassEntity tempClassEntity = programTable.getClassTable().get(callerType);
 		if (tempClassEntity == null)
 		{
-			// TODO
+			error.addError(node.jjtGetFirstToken().beginLine, 
+					"Message Send Caller Type Not Found");
 		}else {
+			// recode the num match the message send if > 1, there is error
+			int oknum = 0;
+			for (int i = 0 ; i < tempClassEntity.getMethodTable().size();i++ )
+			{
+				MethodEntity tempMethod = tempClassEntity.getMethodTable().get(i);
+				if (tempMethod.getMethodName().equals(funcname) &&
+						tempMethod.getParameters().size() == exps.size())
+				{
+					boolean ok = true;
+					for (int j = 0 ; j < exps.size() ; j++)
+					{
+						if (!(tempMethod.getParameters().get(j).equals(exps.get(j))||
+								(tempMethod.getParameters().get(j).equals("Long")
+										&&exps.get(j).equals("Int"))))
+						{
+							ok = false;
+							break;
+						}
+					}
+					
+					if (ok) 
+					{
+						returnType = tempMethod.getReturnType();
+						oknum++;
+					}
+				}
+			}
 			
+			// check for parent class
+			if (tempClassEntity.getParentClassName()!= null)
+			{
+				ClassEntity tempParentClassEntity = programTable.getClassTable()
+										.get(tempClassEntity.getParentClassName());
+				for (int i = 0; i < tempParentClassEntity.getMethodTable().size(); i++) {
+					MethodEntity tempMethod = tempParentClassEntity.getMethodTable().get(i);
+					if (tempMethod.getMethodName().equals(funcname)
+							&& tempMethod.getParameters().size() == exps.size()) {
+						boolean ok = true;
+						for (int j = 0; j < exps.size(); j++) {
+							if (!(tempMethod.getParameters().get(j)
+									.equals(exps.get(j)) || (tempMethod
+									.getParameters().get(j).equals("Long") && exps
+									.get(j).equals("Int")))) {
+								ok = false;
+								break;
+							}
+						}
+
+						if (ok) {
+							returnType = tempMethod.getReturnType();
+							oknum++;
+						}
+					}
+				}
+			}
+			
+			if (oknum > 1)
+			{
+				error.addError(node.jjtGetFirstToken().beginLine,"Duplicate Method Decleared");
+				returnType = "Default";
+			}
 		}
-		return tempClassEntity.getMethodTable().get(funcname).getReturnType();
+		return returnType;
 	}
 
 	@Override
@@ -690,7 +788,7 @@ public class MyVisitor implements XYZ2Visitor {
 		if (!((String)node.jjtGetChild(0).jjtAccept(this, data)).equals("Int"))
 		{
 			error.addError(node.jjtGetFirstToken().beginLine ,
-					"Array Type Error");
+					"Long Array Index Type Error");
 		}
 		return "LongArray";
 	}
@@ -703,7 +801,7 @@ public class MyVisitor implements XYZ2Visitor {
 		if (!((String)node.jjtGetChild(0).jjtAccept(this, data)).equals("Int"))
 		{
 			error.addError(node.jjtGetFirstToken().beginLine, 
-					"Array Type Error");
+					"Int Array Index Type Error");
 		}
 		return "IntArray";
 	}
@@ -734,8 +832,19 @@ public class MyVisitor implements XYZ2Visitor {
 		{
 			if (currMethod.getLocalTable().get(identifier) == null)
 			{
-				error.addError(line,identifier + "Not defined");
-				Type = "Default";
+				boolean par = false;
+				for (int i = 0 ; i < currMethod.getParameters().size() ; i++){
+					if (currMethod.getParameters().get(i).getVarName().equals(identifier))
+					{
+						par = true;
+						Type = currMethod.getParameters().get(i).getTypeName();
+						break;
+					}
+				}
+				if (!par){
+					error.addError(line,identifier + "Not defined");
+					Type = "Default";
+				}
 			}
 			else {
 				Type = currMethod.getLocalTable().get(identifier).getTypeName();
