@@ -88,6 +88,11 @@ public class Compiler {
 		return GenerateSyntaxTree(root);
 	}
 
+	public SimpleNode getRoot()
+	{
+		return root;
+	}
+	
 	public String dump(SimpleNode node) {
 		String name = node.toString();
 		String temp = "";
