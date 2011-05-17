@@ -229,10 +229,23 @@ public class MyVisitor implements XYZ2Visitor {
 		else {
 			currMethod = currClass.getMethodTable().get(methodindex);
 			methodindex++;
+			ASTPreDecl pre = null;
+			ASTPostDecl post = null;
 			for (int i = 2 ; i < node.jjtGetNumChildren()-1 ; i++)
 			{
-				node.jjtGetChild(i).jjtAccept(this, data);
-			}
+				if (node.jjtGetChild(i) instanceof ASTPreDecl)
+				{
+					pre = (ASTPreDecl)node.jjtGetChild(i);
+				}
+				else if (node.jjtGetChild(i) instanceof ASTPostDecl){
+					post = (ASTPostDecl)node.jjtGetChild(i);
+				}
+				else{
+					node.jjtGetChild(i).jjtAccept(this, data);
+				}
+			}		
+			pre.jjtAccept(this, data);
+			post.jjtAccept(this, data);
 			String returnType = (String)node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, data);
 			if (!returnType.equals(currMethod.getReturnType()))
 			{
