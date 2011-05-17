@@ -608,7 +608,7 @@ public class MyVisitor implements XYZ2Visitor {
 		String callerType = (String)node.jjtGetChild(0).jjtAccept(this, data);
 		String funcname = (String)node.jjtGetChild(1).jjtAccept(this, data);
 		Vector<String>exps = new Vector<String>();
-		if (node.jjtGetNumChildren() == 2){
+		if (node.jjtGetNumChildren() == 3){
 			 exps = (Vector<String>)node.jjtGetChild(2).jjtAccept(this, data);
 		}
 		String returnType = "Default";
