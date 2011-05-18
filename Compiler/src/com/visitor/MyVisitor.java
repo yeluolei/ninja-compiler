@@ -184,7 +184,7 @@ public class MyVisitor implements XYZ2Visitor {
 			if (programTable.getClassTable().get(currClass.getParentClassName()) == null)
 			{
 				error.addError(node.jjtGetFirstToken().beginLine,
-						currClass.getClassName() + " Extented type not defined");
+						currClass.getClassName() + " Extended type not defined");
 			}
 			for (int i = 1 ; i < node.jjtGetNumChildren() ; i++)
 			{
@@ -199,7 +199,7 @@ public class MyVisitor implements XYZ2Visitor {
 			currClass = programTable.getClassTable().get((String) node.jjtGetChild(0).jjtAccept(this, data));
 			if (programTable.getClassTable().get(currClass.getParentClassName()) == null)
 			{
-				error.addError(node.jjtGetFirstToken().beginLine, "Extented Class Not Found");
+				error.addError(node.jjtGetFirstToken().beginLine, "Extended Class Not Found");
 			}
 			
 			node.childrenAccept(this, data);
@@ -386,7 +386,7 @@ public class MyVisitor implements XYZ2Visitor {
 		if (!expType.equals(identType)){
 			if (!(expType.equals("Int")&&identType.equals("Long")))
 			{
-				error.addError(node.jjtGetFirstToken().beginLine, "Assiment Type Error");
+				error.addError(node.jjtGetFirstToken().beginLine, "Assignment Type Error");
 			}
 		}
 		return null;
@@ -499,7 +499,7 @@ public class MyVisitor implements XYZ2Visitor {
 				type=(String)node.jjtGetChild(i).jjtAccept(this, data);
 				if (!(type.equals("Int")||type.equals("Long")||type.equals("Boolean")))
 				{
-					error.addError(node.jjtGetFirstToken().beginLine, "Or Expression Type Error");
+					error.addError(node.jjtGetFirstToken().beginLine, "And Expression Type Error");
 					break;
 				}
 			}
@@ -643,8 +643,8 @@ public class MyVisitor implements XYZ2Visitor {
 					boolean ok = true;
 					for (int j = 0 ; j < exps.size() ; j++)
 					{
-						if (!(tempMethod.getParameters().get(j).equals(exps.get(j))||
-								(tempMethod.getParameters().get(j).equals("Long")
+						if (!(tempMethod.getParameters().get(j).getTypeName().equals(exps.get(j))||
+								(tempMethod.getParameters().get(j).getTypeName().equals("Long")
 										&&exps.get(j).equals("Int"))))
 						{
 							ok = false;
@@ -671,9 +671,9 @@ public class MyVisitor implements XYZ2Visitor {
 							&& tempMethod.getParameters().size() == exps.size()) {
 						boolean ok = true;
 						for (int j = 0; j < exps.size(); j++) {
-							if (!(tempMethod.getParameters().get(j)
+							if (!(tempMethod.getParameters().get(j).getTypeName()
 									.equals(exps.get(j)) || (tempMethod
-									.getParameters().get(j).equals("Long") && exps
+									.getParameters().get(j).getTypeName().equals("Long") && exps
 									.get(j).equals("Int")))) {
 								ok = false;
 								break;
@@ -843,7 +843,29 @@ public class MyVisitor implements XYZ2Visitor {
 	public String checkIdentifyType(String identifier , int line)
 	{
 		String Type = null;
-		if (currClass.getFieldTable().get(identifier) == null)
+		if (currMethod.getLocalTable().get(identifier) == null){
+			boolean par = false;
+			for (int i = 0 ; i < currMethod.getParameters().size() ; i++){
+				if (currMethod.getParameters().get(i).getVarName().equals(identifier))
+				{
+					par = true;
+					Type = currMethod.getParameters().get(i).getTypeName();
+					break;
+				}
+			}
+			if (!par){
+				if (currClass.getFieldTable().get(identifier) == null){
+					error.addError(line,identifier + "Not defined");
+					Type = "Default";
+				}
+				else
+					Type = currClass.getFieldTable().get(identifier).getTypeName();
+			}
+		}
+		else{
+			Type = currMethod.getLocalTable().get(identifier).getTypeName();
+		}
+		/*if (currClass.getFieldTable().get(identifier) == null)
 		{
 			if (currMethod.getLocalTable().get(identifier) == null)
 			{
@@ -867,7 +889,7 @@ public class MyVisitor implements XYZ2Visitor {
 		}
 		else {
 			Type = currClass.getFieldTable().get(identifier).getTypeName();
-		}
+		}*/
 		return Type;
 	}
 }
