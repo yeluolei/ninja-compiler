@@ -218,6 +218,7 @@ public class CompilerFrame extends JFrame {
 			{
 				ta_typeResult.append(visitor.error.getErrorsList().get(i)+"\n");
 			}
+			ta_typeResult.append("Type Checking Finish!\n");
 		}
 
 	}

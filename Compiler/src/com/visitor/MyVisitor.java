@@ -285,10 +285,19 @@ public class MyVisitor implements XYZ2Visitor {
 		}
 		variability.setVarName((String)node.jjtGetChild(1).jjtAccept(this, data));
 		variability.setDeclearLine(((SimpleNode)node.jjtGetChild(1)).jjtGetFirstToken().beginLine);
-		if (!currMethod.getParameters().add(variability)){ // Add the parameter to the para Table
+		boolean exist = false;
+		for(int i=0; i<currMethod.getParameters().size(); i++){
+			if(currMethod.getParameters().get(i).getVarName().equals(variability.getVarName())){
+				exist = true;
+				break;
+			}
+		}
+		if (exist){
 			error.addError(variability.getDeclearLine(), 
 					variability.getVarName() +"redefined");
 		}
+		else // Add the parameter to the para Table
+			currMethod.getParameters().add(variability);
 		return null;
 	}
 
@@ -693,6 +702,8 @@ public class MyVisitor implements XYZ2Visitor {
 				error.addError(node.jjtGetFirstToken().beginLine,"Duplicate Method Decleared");
 				returnType = "Default";
 			}
+			if (oknum == 0)
+				error.addError(node.jjtGetFirstToken().beginLine,"Method not found");
 		}
 		return returnType;
 	}
@@ -855,7 +866,7 @@ public class MyVisitor implements XYZ2Visitor {
 			}
 			if (!par){
 				if (currClass.getFieldTable().get(identifier) == null){
-					error.addError(line,identifier + "Not defined");
+					error.addError(line,identifier + " Not defined");
 					Type = "Default";
 				}
 				else
