@@ -224,6 +224,7 @@ public class CompilerFrame extends JFrame {
 				jOutPutArea.append("语义分析完成\n");
 			}
 			catch (Exception e2) {
+				e2.printStackTrace();
 				ta_typeResult.append(e2.getMessage());
 				jOutPutArea.append("语义分析失败\n");
 			}
