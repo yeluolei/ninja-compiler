@@ -254,7 +254,7 @@ public class MyVisitor implements XYZ2Visitor {
 			pre.jjtAccept(this, data);
 			post.jjtAccept(this, data);
 			String returnType = (String)node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, data);
-			if (!returnType.equals(currMethod.getReturnType()))
+			if (!(returnType.equals(currMethod.getReturnType())||returnType.equals("Int")&&currMethod.getReturnType().equals("Long")))
 			{
 				error.addError(node.jjtGetFirstToken().beginLine, "Return Type Error");
 			}
@@ -635,83 +635,89 @@ public class MyVisitor implements XYZ2Visitor {
 	@Override
 	public Object visit(ASTMessageSend node, Object data) {
 		String callerType = (String)node.jjtGetChild(0).jjtAccept(this, data);
-		String funcname = (String)node.jjtGetChild(1).jjtAccept(this, data);
-		Vector<String>exps = new Vector<String>();
-		if (node.jjtGetNumChildren() == 3){
-			 exps = (Vector<String>)node.jjtGetChild(2).jjtAccept(this, data);
-		}
 		String returnType = "Default";
-		
-		ClassEntity tempClassEntity = programTable.getClassTable().get(callerType);
-		if (tempClassEntity == null)
-		{
-			error.addError(node.jjtGetFirstToken().beginLine, 
-					"Message Send Caller Type Not Found");
-		}else {
-			// recode the num match the message send if > 1, there is error
-			int oknum1 = 0, oknum2 = 0;
-			
-			// check for parent class
-			if (tempClassEntity.getParentClassName()!= null)
+		int oknum1, oknum2;
+		for(int ival=1; ival<node.jjtGetNumChildren(); ival++){
+			if( ival > 1 )
+				callerType = returnType;
+			ClassEntity tempClassEntity = programTable.getClassTable().get(callerType);
+			if (tempClassEntity == null)
 			{
-				ClassEntity tempParentClassEntity = programTable.getClassTable()
-										.get(tempClassEntity.getParentClassName());
-				for (int i = 0; i < tempParentClassEntity.getMethodTable().size(); i++) {
-					MethodEntity tempMethod = tempParentClassEntity.getMethodTable().get(i);
-					if (tempMethod.getMethodName().equals(funcname)
-							&& tempMethod.getParameters().size() == exps.size()) {
+				error.addError(node.jjtGetFirstToken().beginLine, 
+						"Message Send Caller Type Not Found");
+				returnType = "Default";
+			}else {
+				oknum1 = 0;
+				oknum2 = 0;
+				String funcname = (String)node.jjtGetChild(ival).jjtAccept(this, data);
+				Vector<String>exps = new Vector<String>();
+				if (ival+1 < node.jjtGetNumChildren() && node.jjtGetChild(ival+1) instanceof ASTExpressionList){
+					 exps = (Vector<String>)node.jjtGetChild(ival+1).jjtAccept(this, data);
+					 ival++;
+				}
+				// recode the num match the message send if > 1, there is error
+				// check for parent class
+				if (tempClassEntity.getParentClassName()!= null)
+				{
+					ClassEntity tempParentClassEntity = programTable.getClassTable()
+											.get(tempClassEntity.getParentClassName());
+					for (int i = 0; i < tempParentClassEntity.getMethodTable().size(); i++) {
+						MethodEntity tempMethod = tempParentClassEntity.getMethodTable().get(i);
+						if (tempMethod.getMethodName().equals(funcname)
+								&& tempMethod.getParameters().size() == exps.size()) {
+							boolean ok = true;
+							for (int j = 0; j < exps.size(); j++) {
+								if (!(tempMethod.getParameters().get(j).getTypeName()
+										.equals(exps.get(j)) || (tempMethod
+										.getParameters().get(j).getTypeName().equals("Long") && exps
+										.get(j).equals("Int")))) {
+									ok = false;
+									break;
+								}
+							}
+	
+							if (ok) {
+								returnType = tempMethod.getReturnType();
+								oknum2++;
+							}
+						}
+					}
+				}
+	
+				for (int i = 0 ; i < tempClassEntity.getMethodTable().size();i++ )
+				{
+					MethodEntity tempMethod = tempClassEntity.getMethodTable().get(i);
+					if (tempMethod.getMethodName().equals(funcname) &&
+							tempMethod.getParameters().size() == exps.size())
+					{
 						boolean ok = true;
-						for (int j = 0; j < exps.size(); j++) {
-							if (!(tempMethod.getParameters().get(j).getTypeName()
-									.equals(exps.get(j)) || (tempMethod
-									.getParameters().get(j).getTypeName().equals("Long") && exps
-									.get(j).equals("Int")))) {
+						for (int j = 0 ; j < exps.size() ; j++)
+						{
+							if (!(tempMethod.getParameters().get(j).getTypeName().equals(exps.get(j))||
+									(tempMethod.getParameters().get(j).getTypeName().equals("Long")
+											&&exps.get(j).equals("Int"))))
+							{
 								ok = false;
 								break;
 							}
 						}
-
-						if (ok) {
-							returnType = tempMethod.getReturnType();
-							oknum2++;
-						}
-					}
-				}
-			}
-			
-			for (int i = 0 ; i < tempClassEntity.getMethodTable().size();i++ )
-			{
-				MethodEntity tempMethod = tempClassEntity.getMethodTable().get(i);
-				if (tempMethod.getMethodName().equals(funcname) &&
-						tempMethod.getParameters().size() == exps.size())
-				{
-					boolean ok = true;
-					for (int j = 0 ; j < exps.size() ; j++)
-					{
-						if (!(tempMethod.getParameters().get(j).getTypeName().equals(exps.get(j))||
-								(tempMethod.getParameters().get(j).getTypeName().equals("Long")
-										&&exps.get(j).equals("Int"))))
+						
+						if (ok) 
 						{
-							ok = false;
-							break;
+							returnType = tempMethod.getReturnType();
+							oknum1++;
 						}
 					}
-					
-					if (ok) 
-					{
-						returnType = tempMethod.getReturnType();
-						oknum1++;
-					}
 				}
+				
+				if (oknum1 > 1 || oknum2 > 1)
+				{
+					error.addError(node.jjtGetFirstToken().beginLine,"Duplicate Method Decleared");
+					returnType = "Default";
+				}
+				if (oknum1 == 0 && oknum2 ==0)
+					error.addError(node.jjtGetFirstToken().beginLine,"Method not found");
 			}
-			
-			if (oknum1 > 1 || oknum2 > 1)
-			{
-				error.addError(node.jjtGetFirstToken().beginLine,"Duplicate Method Decleared");
-				returnType = "Default";
-			}
-			if (oknum1 == 0 && oknum2 ==0)
-				error.addError(node.jjtGetFirstToken().beginLine,"Method not found");
 		}
 		return returnType;
 	}
