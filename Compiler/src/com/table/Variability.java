@@ -7,6 +7,8 @@ public class Variability {
 	private Object value; // 变量值
 	private int declearLine; // 声明时所在行
 
+	public  Variability() {
+	}
 
 	public void setValue(Object value) {
 		this.value = value;
