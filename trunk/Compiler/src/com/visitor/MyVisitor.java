@@ -303,8 +303,8 @@ public class MyVisitor implements XYZ2Visitor {
 			error.addError(variability.getDeclearLine(), 
 					variability.getVarName() +"redefined");
 		}
-		else // Add the parameter to the para Table
-			currMethod.getParameters().add(variability);
+		// Add the parameter to the para Table
+		currMethod.getParameters().add(variability);
 		return null;
 	}
 
@@ -884,31 +884,6 @@ public class MyVisitor implements XYZ2Visitor {
 		else{
 			Type = currMethod.getLocalTable().get(identifier).getTypeName();
 		}
-		/*if (currClass.getFieldTable().get(identifier) == null)
-		{
-			if (currMethod.getLocalTable().get(identifier) == null)
-			{
-				boolean par = false;
-				for (int i = 0 ; i < currMethod.getParameters().size() ; i++){
-					if (currMethod.getParameters().get(i).getVarName().equals(identifier))
-					{
-						par = true;
-						Type = currMethod.getParameters().get(i).getTypeName();
-						break;
-					}
-				}
-				if (!par){
-					error.addError(line,identifier + "Not defined");
-					Type = "Default";
-				}
-			}
-			else {
-				Type = currMethod.getLocalTable().get(identifier).getTypeName();
-			}
-		}
-		else {
-			Type = currClass.getFieldTable().get(identifier).getTypeName();
-		}*/
 		return Type;
 	}
 }
