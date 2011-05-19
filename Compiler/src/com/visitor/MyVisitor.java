@@ -223,6 +223,11 @@ public class MyVisitor implements XYZ2Visitor {
 				temp = "Default";
 			}
 			currMethod.setReturnType(temp);
+			for (int i = 2 ; i < node.jjtGetNumChildren()-1 ; i++)
+			{
+				if (node.jjtGetChild(i) instanceof ASTFormalParameterList)
+					node.jjtGetChild(i).jjtAccept(this, data);
+			}		
 			currClass.getMethodTable().add(currMethod);
 			currMethod = null; // 当前方法定义域结束
 		}
@@ -233,15 +238,17 @@ public class MyVisitor implements XYZ2Visitor {
 			ASTPostDecl post = null;
 			for (int i = 2 ; i < node.jjtGetNumChildren()-1 ; i++)
 			{
-				if (node.jjtGetChild(i) instanceof ASTPreDecl)
-				{
-					pre = (ASTPreDecl)node.jjtGetChild(i);
-				}
-				else if (node.jjtGetChild(i) instanceof ASTPostDecl){
-					post = (ASTPostDecl)node.jjtGetChild(i);
-				}
-				else{
-					node.jjtGetChild(i).jjtAccept(this, data);
+				if (!(node.jjtGetChild(i) instanceof ASTFormalParameterList)){
+					if (node.jjtGetChild(i) instanceof ASTPreDecl)
+					{
+						pre = (ASTPreDecl)node.jjtGetChild(i);
+					}
+					else if (node.jjtGetChild(i) instanceof ASTPostDecl){
+						post = (ASTPostDecl)node.jjtGetChild(i);
+					}
+					else{
+						node.jjtGetChild(i).jjtAccept(this, data);
+					}
 				}
 			}		
 			pre.jjtAccept(this, data);
@@ -642,32 +649,7 @@ public class MyVisitor implements XYZ2Visitor {
 					"Message Send Caller Type Not Found");
 		}else {
 			// recode the num match the message send if > 1, there is error
-			int oknum = 0;
-			for (int i = 0 ; i < tempClassEntity.getMethodTable().size();i++ )
-			{
-				MethodEntity tempMethod = tempClassEntity.getMethodTable().get(i);
-				if (tempMethod.getMethodName().equals(funcname) &&
-						tempMethod.getParameters().size() == exps.size())
-				{
-					boolean ok = true;
-					for (int j = 0 ; j < exps.size() ; j++)
-					{
-						if (!(tempMethod.getParameters().get(j).getTypeName().equals(exps.get(j))||
-								(tempMethod.getParameters().get(j).getTypeName().equals("Long")
-										&&exps.get(j).equals("Int"))))
-						{
-							ok = false;
-							break;
-						}
-					}
-					
-					if (ok) 
-					{
-						returnType = tempMethod.getReturnType();
-						oknum++;
-					}
-				}
-			}
+			int oknum1 = 0, oknum2 = 0;
 			
 			// check for parent class
 			if (tempClassEntity.getParentClassName()!= null)
@@ -691,18 +673,44 @@ public class MyVisitor implements XYZ2Visitor {
 
 						if (ok) {
 							returnType = tempMethod.getReturnType();
-							oknum++;
+							oknum2++;
 						}
 					}
 				}
 			}
 			
-			if (oknum > 1)
+			for (int i = 0 ; i < tempClassEntity.getMethodTable().size();i++ )
+			{
+				MethodEntity tempMethod = tempClassEntity.getMethodTable().get(i);
+				if (tempMethod.getMethodName().equals(funcname) &&
+						tempMethod.getParameters().size() == exps.size())
+				{
+					boolean ok = true;
+					for (int j = 0 ; j < exps.size() ; j++)
+					{
+						if (!(tempMethod.getParameters().get(j).getTypeName().equals(exps.get(j))||
+								(tempMethod.getParameters().get(j).getTypeName().equals("Long")
+										&&exps.get(j).equals("Int"))))
+						{
+							ok = false;
+							break;
+						}
+					}
+					
+					if (ok) 
+					{
+						returnType = tempMethod.getReturnType();
+						oknum1++;
+					}
+				}
+			}
+			
+			if (oknum1 > 1 || oknum2 > 1)
 			{
 				error.addError(node.jjtGetFirstToken().beginLine,"Duplicate Method Decleared");
 				returnType = "Default";
 			}
-			if (oknum == 0)
+			if (oknum1 == 0 && oknum2 ==0)
 				error.addError(node.jjtGetFirstToken().beginLine,"Method not found");
 		}
 		return returnType;

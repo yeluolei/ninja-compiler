@@ -207,18 +207,26 @@ public class CompilerFrame extends JFrame {
 				e1.printStackTrace();
 				ta_syntaxResult.append(e1.getMessage());
 				jOutPutArea.append("语法分析失败\n");
+				return;
 			}
-			
+			jOutPutArea.append("语义分析开始\n");
 			ta_typeResult.append("Type Checking Start!\n");
-			MyVisitor visitor = new MyVisitor();
-			compiler.getRoot().jjtAccept(visitor, 1);
-			compiler.getRoot().jjtAccept(visitor, 2);
-			compiler.getRoot().jjtAccept(visitor, 3);
-			for (int i = 0 ; i < visitor.error.getNumErrors();i++ )
-			{
-				ta_typeResult.append(visitor.error.getErrorsList().get(i)+"\n");
+			try{
+				MyVisitor visitor = new MyVisitor();
+				compiler.getRoot().jjtAccept(visitor, 1);
+				compiler.getRoot().jjtAccept(visitor, 2);
+				compiler.getRoot().jjtAccept(visitor, 3);
+				for (int i = 0 ; i < visitor.error.getNumErrors();i++ )
+				{
+					ta_typeResult.append(visitor.error.getErrorsList().get(i)+"\n");
+				}
+				ta_typeResult.append("Type Checking Finish!\n");
+				jOutPutArea.append("语义分析完成\n");
 			}
-			ta_typeResult.append("Type Checking Finish!\n");
+			catch (Exception e2) {
+				ta_typeResult.append(e2.getMessage());
+				jOutPutArea.append("语义分析失败\n");
+			}
 		}
 
 	}
