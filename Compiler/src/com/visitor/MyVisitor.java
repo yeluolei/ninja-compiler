@@ -201,7 +201,7 @@ public class MyVisitor implements XYZ2Visitor {
 			{
 				error.addError(node.jjtGetFirstToken().beginLine, "Extended Class Not Found");
 			}
-			
+			methodindex = 0;
 			node.childrenAccept(this, data);
 			currClass = null;
 		}
