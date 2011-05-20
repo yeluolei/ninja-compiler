@@ -1,4 +1,5 @@
 package com.visitor;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import com.compiler.ASTAllocationExpression;
@@ -55,7 +56,6 @@ import com.compiler.XYZ2Visitor;
 import com.error.ErrorMessage;
 import com.table.ClassEntity;
 import com.table.MethodEntity;
-import com.table.ParameterTable;
 import com.table.ProgramTable;
 import com.table.Variability;
 
@@ -64,11 +64,13 @@ public class MyVisitor implements XYZ2Visitor {
 	private ClassEntity currClass = null;
 	private MethodEntity currMethod = null;
 	public ProgramTable programTable = null;
+	public Vector<Hashtable<String,Variability>>blockVar;
 	public int methodindex = 0;
 	
 	public MyVisitor(){
 		super();
 		programTable = new ProgramTable();
+		blockVar = new Vector<Hashtable<String,Variability>>();
 	}
 	
 	@Override
@@ -200,6 +202,12 @@ public class MyVisitor implements XYZ2Visitor {
 			if (programTable.getClassTable().get(currClass.getParentClassName()) == null)
 			{
 				error.addError(node.jjtGetFirstToken().beginLine, "Extended Class Not Found");
+			}else if (programTable.getClassTable().get(currClass.getParentClassName())
+					.getParentClassName()!=null){
+				if (programTable.getClassTable().get(currClass.getParentClassName())
+						.getParentClassName().equals(currClass.getClassName())){
+					error.addError(node.jjtGetFirstToken().beginLine, "Circular Extents");
+				}
 			}
 			methodindex = 0;
 			node.childrenAccept(this, data);
@@ -367,17 +375,44 @@ public class MyVisitor implements XYZ2Visitor {
 		 *  Current method is null , so this var is in class
 		 *  Put it into the FieldTable
 		 */
-		if (currMethod == null){
-			if (currClass.getFieldTable().get(v.getVarName()) == null){
-				currClass.getFieldTable().put(v.getVarName(), v);
-			}else {
-				error.addError(node.jjtGetFirstToken().beginLine, v.getVarName() + " Redefined");
+		if (blockVar.size()!=0){
+			if (currMethod!= null && currMethod.getLocalTable().get(v.getVarName())!=null)
+			{
+				error.addError(node.jjtGetFirstToken().beginLine,
+						v.getVarName() + " Redefined");
 			}
-		}else {
-			if (currMethod.getLocalTable().get(v.getVarName()) == null){
-				currMethod.getLocalTable().put(v.getVarName(), v);
-			}else {
-				error.addError(node.jjtGetFirstToken().beginLine, v.getVarName() + " Redefined");
+			else
+			{
+				boolean exist = false;
+				for (int i = 0 ; i < blockVar.size() ;i++){
+					if (blockVar.get(i).get(v.getVarName())!=null){
+						error.addError(node.jjtGetFirstToken().beginLine,
+								v.getVarName() + " Redefined");
+						exist = true;
+						break;
+					}
+				}
+				if (!exist)
+				{
+					blockVar.get(blockVar.size()-1).put(v.getVarName(), v);
+				}
+			}
+		}
+		else {
+			if (currMethod == null) {
+				if (currClass.getFieldTable().get(v.getVarName()) == null) {
+					currClass.getFieldTable().put(v.getVarName(), v);
+				} else {
+					error.addError(node.jjtGetFirstToken().beginLine,
+							v.getVarName() + " Redefined");
+				}
+			} else {
+				if (currMethod.getLocalTable().get(v.getVarName()) == null) {
+					currMethod.getLocalTable().put(v.getVarName(), v);
+				} else {
+					error.addError(node.jjtGetFirstToken().beginLine,
+							v.getVarName() + " Redefined");
+				}
 			}
 		}
 		return null;
@@ -387,7 +422,9 @@ public class MyVisitor implements XYZ2Visitor {
 
 	@Override
 	public Object visit(ASTBlock node, Object data) {
+		blockVar.add(new Hashtable<String, Variability>());
 		node.childrenAccept(this, data);
+		blockVar.remove(blockVar.size()-1);
 		return null;
 	}
 
@@ -868,26 +905,36 @@ public class MyVisitor implements XYZ2Visitor {
 	public String checkIdentifyType(String identifier , int line)
 	{
 		String Type = null;
-		if (currMethod.getLocalTable().get(identifier) == null){
-			boolean par = false;
-			for (int i = 0 ; i < currMethod.getParameters().size() ; i++){
-				if (currMethod.getParameters().get(i).getVarName().equals(identifier))
+		if (blockVar.size() != 0) {
+			for (int i = 0 ; i < blockVar.size() ; i++)
+			{
+				if (blockVar.get(i).get(identifier)!= null)
 				{
+					Type = blockVar.get(i).get(identifier).getTypeName();
+					return Type;
+				}
+			}
+		} 
+		
+		if (currMethod.getLocalTable().get(identifier) == null) {
+			boolean par = false;
+			for (int i = 0; i < currMethod.getParameters().size(); i++) {
+				if (currMethod.getParameters().get(i).getVarName()
+						.equals(identifier)) {
 					par = true;
 					Type = currMethod.getParameters().get(i).getTypeName();
 					break;
 				}
 			}
-			if (!par){
-				if (currClass.getFieldTable().get(identifier) == null){
-					error.addError(line,identifier + " Not defined");
+			if (!par) {
+				if (currClass.getFieldTable().get(identifier) == null) {
+					error.addError(line, identifier + " Not defined");
 					Type = "Default";
-				}
-				else
-					Type = currClass.getFieldTable().get(identifier).getTypeName();
+				} else
+					Type = currClass.getFieldTable().get(identifier)
+							.getTypeName();
 			}
-		}
-		else{
+		} else {
 			Type = currMethod.getLocalTable().get(identifier).getTypeName();
 		}
 		return Type;
